@@ -29,8 +29,6 @@ def serialize_music_item(mi: models.MusicItem, include_tracks: bool = True) -> s
         genres=[schemas.GenreOut.model_validate(g.genre) for g in mi.genres],
     )
     
-    # Manually build the track_file dict (if it was loaded)
-    # We use getattr to safely access it without triggering a lazy-load
     track_file_obj = getattr(mi, 'track_file', None)
     if track_file_obj:
         data["track_file"] = {
@@ -49,7 +47,7 @@ def serialize_music_item(mi: models.MusicItem, include_tracks: bool = True) -> s
         data["tracks"] = tracks
     else:
         data["tracks"] = []
-        
+  
     return schemas.MusicItemOut(**data)
 
 @router.post("", response_model=schemas.MusicItemOut, status_code=201, dependencies=[Depends(require_admin)])

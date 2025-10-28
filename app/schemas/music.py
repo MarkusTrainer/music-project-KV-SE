@@ -50,8 +50,6 @@ class TrackFileOut(BaseModel):
     original_size: int
     model_config = ConfigDict(from_attributes=True)
 
-
-# 2. UPDATE YOUR MusicItemOut SCHEMA
 class MusicItemOut(BaseModel):
     id: int
     title: str
@@ -62,13 +60,10 @@ class MusicItemOut(BaseModel):
     genres: List[GenreOut] = []
     tracks: List["MusicItemOut"] = [] 
     
-    # This is the crucial field to add
     track_file: Optional[TrackFileOut] = None 
 
-    # Ensure this is using ConfigDict
     model_config = ConfigDict(from_attributes=True)
 
-# 3. ADD THIS LINE AFTER THE CLASS
 MusicItemOut.model_rebuild()
 
 # Review
