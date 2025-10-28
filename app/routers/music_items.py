@@ -18,7 +18,6 @@ def calculate_album_duration(db: Session, album_id: int) -> int:
     return result or 0
 
 def serialize_music_item(mi: models.MusicItem, include_tracks: bool = True) -> schemas.MusicItemOut:
-    # Base serialization
     data = dict(
         id=mi.id,
         title=mi.title,

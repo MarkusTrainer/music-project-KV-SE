@@ -33,7 +33,7 @@ class MusicItemBase(BaseModel):
 class MusicItemCreate(MusicItemBase):
     artist_ids: Optional[list[int]] = None
     genre_ids: Optional[list[int]] = None
-    track_ids: Optional[list[int]] = None  # Only valid when item_type == 'ALBUM'
+    track_ids: Optional[list[int]] = None 
 
 class MusicItemUpdate(BaseModel):
     title: Optional[str] = None
@@ -42,7 +42,7 @@ class MusicItemUpdate(BaseModel):
     duration_seconds: Optional[int] = None
     artist_ids: Optional[list[int]] = None
     genre_ids: Optional[list[int]] = None
-    track_ids: Optional[list[int]] = None  # replace full album track list if provided - Only valid when item_type == 'ALBUM'
+    track_ids: Optional[list[int]] = None 
 
 class TrackFileOut(BaseModel):
     id: int
@@ -94,11 +94,10 @@ class CollectionEntryOut(BaseModel):
     preference: str
     is_favourite: bool
     note: Optional[str] = None
-    music_item: Optional[MusicItemOut] = None  # enriched when returning collections
+    music_item: Optional[MusicItemOut] = None 
     class Config:
         model_config = {"from_attributes": True}
 
-# Track file (binary stored compressed in DB)
 class TrackFileOut(BaseModel):
     id: int
     track_id: int
@@ -109,5 +108,4 @@ class TrackFileOut(BaseModel):
     class Config:
         from_attributes = True
 
-# Forward reference resolution for recursive model
 MusicItemOut.model_rebuild()
