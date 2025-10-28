@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 
 from app.schemas.user import UserOut
@@ -44,17 +44,32 @@ class MusicItemUpdate(BaseModel):
     genre_ids: Optional[list[int]] = None
     track_ids: Optional[list[int]] = None  # replace full album track list if provided - Only valid when item_type == 'ALBUM'
 
+class TrackFileOut(BaseModel):
+    id: int
+    filename: str
+    original_size: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+# 2. UPDATE YOUR MusicItemOut SCHEMA
 class MusicItemOut(BaseModel):
     id: int
     title: str
     item_type: str
     release_year: Optional[int] = None
     duration_seconds: Optional[int] = None
-    artists: list[ArtistOut] = []
-    genres: list[GenreOut] = []
-    tracks: list['MusicItemOut'] = []  # recursive for album contents (only set when item is ALBUM)
-    class Config:
-        from_attributes = True
+    artists: List[ArtistOut] = []
+    genres: List[GenreOut] = []
+    tracks: List["MusicItemOut"] = [] 
+    
+    # This is the crucial field to add
+    track_file: Optional[TrackFileOut] = None 
+
+    # Ensure this is using ConfigDict
+    model_config = ConfigDict(from_attributes=True)
+
+# 3. ADD THIS LINE AFTER THE CLASS
+MusicItemOut.model_rebuild()
 
 # Review
 class ReviewCreate(BaseModel):

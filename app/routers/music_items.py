@@ -28,16 +28,28 @@ def serialize_music_item(mi: models.MusicItem, include_tracks: bool = True) -> s
         artists=[schemas.ArtistOut.model_validate(a.artist) for a in mi.artists],
         genres=[schemas.GenreOut.model_validate(g.genre) for g in mi.genres],
     )
+    
+    # Manually build the track_file dict (if it was loaded)
+    # We use getattr to safely access it without triggering a lazy-load
+    track_file_obj = getattr(mi, 'track_file', None)
+    if track_file_obj:
+        data["track_file"] = {
+            "id": track_file_obj.id,
+            "filename": track_file_obj.filename,
+            "original_size": track_file_obj.original_size
+        }
+    else:
+        data["track_file"] = None
+
     # Add tracks if album
     if include_tracks and mi.item_type == "ALBUM":
-        # Ensure album_tracks loaded
         tracks = []
         for at in sorted(mi.album_tracks, key=lambda x: x.track_number):
-            # Avoid deep recursion by not including tracks' own album memberships
             tracks.append(serialize_music_item(at.track, include_tracks=False))
         data["tracks"] = tracks
     else:
         data["tracks"] = []
+        
     return schemas.MusicItemOut(**data)
 
 @router.post("", response_model=schemas.MusicItemOut, status_code=201, dependencies=[Depends(require_admin)])
@@ -113,6 +125,7 @@ def get_music_item(item_id: int, db: Session = Depends(get_db)):
         selectinload(models.MusicItem.genres).selectinload(models.MusicItemGenre.genre),
         selectinload(models.MusicItem.album_tracks).selectinload(models.AlbumTrack.track).selectinload(models.MusicItem.artists).selectinload(models.MusicItemArtist.artist),
         selectinload(models.MusicItem.album_tracks).selectinload(models.AlbumTrack.track).selectinload(models.MusicItem.genres).selectinload(models.MusicItemGenre.genre),
+        selectinload(models.MusicItem.track_file)
     ).get(item_id)
     if not mi:
         raise HTTPException(status_code=404, detail="Music item not found")
