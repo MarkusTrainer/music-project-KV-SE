@@ -34,6 +34,7 @@ class MusicItemCreate(MusicItemBase):
     artist_ids: Optional[list[int]] = None
     genre_ids: Optional[list[int]] = None
     track_ids: Optional[list[int]] = None 
+    album_id: Optional[int] = None
 
 class MusicItemUpdate(BaseModel):
     title: Optional[str] = None
@@ -43,6 +44,7 @@ class MusicItemUpdate(BaseModel):
     artist_ids: Optional[list[int]] = None
     genre_ids: Optional[list[int]] = None
     track_ids: Optional[list[int]] = None 
+    album_id: Optional[int] = None
 
 class TrackFileOut(BaseModel):
     id: int

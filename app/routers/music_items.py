@@ -70,6 +70,21 @@ def create_music_item(payload: schemas.MusicItemCreate, db: Session = Depends(ge
         for gid in payload.genre_ids:
             db.add(models.MusicItemGenre(music_item_id=mi.id, genre_id=gid))
 
+    if mi.item_type == "TRACK" and payload.album_id is not None:
+        album = db.get(models.MusicItem, payload.album_id)
+        if not album:
+            raise HTTPException(status_code=404, detail=f"Album with id {payload.album_id} not found")
+        if album.item_type != "ALBUM":
+            raise HTTPException(status_code=400, detail=f"Item with id {payload.album_id} is not an album")
+
+        current_track_count = db.query(func.count(models.AlbumTrack.track_id)).filter(models.AlbumTrack.album_id == payload.album_id).scalar()
+        
+        db.add(models.AlbumTrack(
+            album_id=payload.album_id,
+            track_id=mi.id,
+            track_number=current_track_count + 1
+        ))       
+
     # Album tracks (only if album)
     if payload.item_type == "ALBUM" and payload.track_ids:
         # Validate tracks exist and are TRACK type
@@ -151,6 +166,31 @@ def update_music_item(item_id: int, payload: schemas.MusicItemUpdate, db: Sessio
         db.query(models.MusicItemGenre).filter(models.MusicItemGenre.music_item_id == item_id).delete()
         for gid in payload.genre_ids:
             db.add(models.MusicItemGenre(music_item_id=item_id, genre_id=gid))
+
+    if mi.item_type == "TRACK" and "album_id" in payload.model_fields_set:
+            current_assoc = db.query(models.AlbumTrack).filter(models.AlbumTrack.track_id == item_id).first()
+            new_album_id = payload.album_id
+            
+            current_album_id = current_assoc.album_id if current_assoc else None
+
+            if new_album_id != current_album_id:
+                if current_assoc:
+                    db.delete(current_assoc)
+                
+                if new_album_id is not None:
+                    new_album = db.get(models.MusicItem, new_album_id)
+                    if not new_album:
+                        raise HTTPException(status_code=404, detail=f"Album with id {new_album_id} not found")
+                    if new_album.item_type != "ALBUM":
+                        raise HTTPException(status_code=400, detail=f"Item with id {new_album_id} is not an album")
+
+                    current_track_count = db.query(func.count(models.AlbumTrack.track_id)).filter(models.AlbumTrack.album_id == new_album_id).scalar()
+                    db.add(models.AlbumTrack(
+                        album_id=new_album_id,
+                        track_id=item_id,
+                        track_number=current_track_count + 1
+                    ))
+
     if payload.track_ids is not None:
         # Replace album track list (only allowed if item is album)
         if mi.item_type != "ALBUM":
